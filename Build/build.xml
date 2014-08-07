@@ -1,30 +1,37 @@
 <?xml version="1.0"?>
 <project name="PHPExcel" default="release-standard" basedir=".">
-    <taskdef classname="phing.tasks.ext.d51PearPkg2Task" name="d51pearpkg2"/>
-
     <target name="gather">
         <if>
-            <isfalse value="${packageVersion}"/>
-            <then>
-                <propertyprompt propertyName="packageVersion" defaultValue="1.0.0"
-                                promptText="Enter PHPExcel version number"/>
-            </then>
+			<isset property="${packageVersion}"/>
+			<then>
+				<echo message="PHPExcel version number is ${packageVersion}" />
+			</then>
+			<else>
+				<propertyprompt propertyName="packageVersion" defaultValue="1.0.0"
+								promptText="Enter PHPExcel version number"/>
+			</else>
         </if>
 
         <if>
-            <isfalse value="${releaseDate}"/>
-            <then>
-                <propertyprompt propertyName="releaseDate" defaultValue="2010-01-01"
-                                promptText="Enter PHPExcel release date"/>
-            </then>
+			<isset property="${releaseDate}"/>
+			<then>
+				<echo message="Release date is ${releaseDate}" />
+			</then>
+			<else>
+				<propertyprompt propertyName="releaseDate" defaultValue="2010-01-01"
+								promptText="Enter PHPExcel release date"/>
+			</else>
         </if>
 
         <if>
-            <isfalse value="${documentFormat}"/>
-            <then>
-                <propertyprompt propertyName="documentFormat" defaultValue="doc"
-                                promptText="Enter Document Format"/>
-            </then>
+			<isset property="${documentFormat}"/>
+			<then>
+				<echo message="Document Format is ${documentFormat}" />
+			</then>
+			<else>
+				<propertyprompt propertyName="documentFormat" defaultValue="doc"
+								promptText="Enter Document Format"/>
+			</else>
         </if>
     </target>
 
@@ -42,6 +49,12 @@
             </fileset>
         </copy>
 
+        <copy todir="${phing.dir}/build/Examples" overwrite="true">
+            <fileset dir="${phing.dir}/../Examples">
+                <include name="**/*"/>
+            </fileset>
+        </copy>
+
         <copy todir="${phing.dir}/build/Documentation" overwrite="true">
             <fileset dir="${phing.dir}/../Documentation">
                 <include name="*.${documentFormat}"/>
@@ -54,12 +67,6 @@
             <fileset dir="${phing.dir}/../Documentation/Examples">
                 <include name="**/*"/>
                 <exclude name="assets"/>
-            </fileset>
-        </copy>
-
-        <copy todir="${phing.dir}/build/unitTests" overwrite="true">
-            <fileset dir="${phing.dir}/../unitTests">
-                <include name="**/*"/>
             </fileset>
         </copy>
 
@@ -87,7 +94,7 @@
             </fileset>
             <filterchain>
                 <replaceregexp>
-                    <regexp pattern="Fixed in SVN" replace="${releaseDate} (v${packageVersion})"/>
+                    <regexp pattern="Fixed in develop branch for release v${packageVersion}" replace="${releaseDate} (v${packageVersion})"/>
                 </replaceregexp>
             </filterchain>
         </reflexive>
@@ -95,17 +102,13 @@
 
     <target name="apidocs" depends="versionNumber">
         <echo msg="Generating API documentation..."/>
-        <phpdoc title="PHPExcel classes"
-                destdir="${phing.dir}/build/Documentation/API"
-                sourcecode="true"
-                output="HTML:Smarty:PHP"
-                defaultcategoryname="PHPExcel"
-                defaultpackagename="PHPExcel"
-                pear="true">
+        <phpdoc2 title="PHPExcel classes"
+                 destdir="${phing.dir}/build/Documentation/API"
+				 template="responsive">
             <fileset dir="${phing.dir}/build/Classes">
                 <include name="**/*.php"/>
             </fileset>
-        </phpdoc>
+        </phpdoc2>
     </target>
 
     <target name="release-standard" depends="apidocs">
@@ -136,7 +139,7 @@
                 <element name="description" value="A pure PHP library for reading and writing spreadsheet files" />
                 <element name="authors">
                     <element name="Mark Baker">
-                        <element name="e-mail" value="mbaker@inviqa.com" />
+                        <element name="e-mail" value="mark@lange.demon.co.uk" />
                     </element>
                 </element>
             </metadata>
@@ -147,6 +150,8 @@
     </target>
 
     <target name="release-pear" depends="versionNumber">
+        <taskdef classname="phing.tasks.ext.d51PearPkg2Task" name="d51pearpkg2"/>
+
         <mkdir dir="${phing.dir}/release"/>
 
         <echo msg="Creating PEAR release package (v${packageVersion})..."/>
@@ -182,7 +187,7 @@
         <delete dir="${phing.dir}/build"/>
     </target>
 
-    <target name="release-documentation">
+    <target name="release-documentation" depends="gather">
         <mkdir dir="${phing.dir}/release"/>
 
         <echo msg="Creating documentation release (v${packageVersion} with ${documentFormat} documents)..."/>
